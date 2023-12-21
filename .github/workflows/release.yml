@@ -44,7 +44,7 @@ jobs:
           -u `stat -c "%u:%g" ./` \
           -v "${{github.workspace}}:/svase" \
           ${{matrix.platform_name}}-builder \
-          sh -c 'make standalone -j';
+          sh -c 'make release -j';
           ls ${{github.workspace}}/build
 
     - name: Upload

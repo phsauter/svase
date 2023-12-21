@@ -1,0 +1,16 @@
+[submodule "deps/fmt"]
+	path = deps/fmt
+	hash = d2c47c0df23d95e3d7c5def06e5f67f32eb7ffc7
+	url = https://github.com/fmtlib/fmt.git
+[submodule "deps/cxxopts"]
+	path = deps/cxxopts
+	hash = 2e3c6991d33811878ebcc0839d3815850d129b3a
+	url = https://github.com/jarro2783/cxxopts
+[submodule "deps/slang"]
+	path = deps/slang
+	hash = 007e5ab3b7b804bdb3f31a97754ee975144db313
+	url = https://github.com/MikePopoloski/slang.git
+[submodule "deps/mimalloc"]
+	path = deps/mimalloc
+	hash = 43ce4bd7fd34bcc730c1c7471c99995597415488
+	url = https://github.com/microsoft/mimalloc.git
