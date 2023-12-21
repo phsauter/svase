@@ -5,6 +5,7 @@
 # Author:  Paul Scheffler <paulsc@iis.ee.ethz.ch>
 
 all: install_fmt
+all: install_mimalloc
 all: install_slang
 all: install_cxxopts
 
@@ -18,9 +19,15 @@ install_fmt: | install
 	cmake --build fmt/build -j$(shell nproc)
 	cmake --install fmt/build --prefix install
 
+install_mimalloc: | install
+	git submodule update --init --recursive mimalloc
+	cd mimalloc && cmake -B out
+	cmake --build mimalloc/out -j$(shell nproc)
+	cmake --install mimalloc/out --prefix install
+
 install_slang: | install
-	git submodule update --init --recursive slang
 	cd slang && cmake -B build
+	cmake -S slang -B slang/build -DSLANG_USE_MIMALLOC=OFF
 	cmake --build slang/build -j$(shell nproc)
 	cmake --install slang/build --prefix install
 

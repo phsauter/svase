@@ -4,31 +4,36 @@
 
 # Author:  Philippe Sauter <phsauter@student.ethz.ch>
 
-BUILD_DIR ?= build
-BUILD_TYPE ?= Debug
-DEPS := deps/fmt/build deps/slang/build deps/cxxopts/build
+BUILD_DIR      ?= build
+BUILD_TYPE     ?= Debug
+DEPS   := deps/fmt/build deps/mimalloc/out deps/slang/build deps/cxxopts/build
+SVASE  := $(BUILD_DIR)/svase
 
 ## build svase in debug mode (default)
-all: debug 
+all: debug
 
-## calls build in release mode
+## build release binary
 release: $(DEPS)
 	@$(MAKE) build BUILD_TYPE=Release
 
-## calls build with debug mode
+## build binary with debug symbols
 debug: $(DEPS)
 	@$(MAKE) build BUILD_TYPE=Debug
 
 build: $(DEPS)
+	@rm -rf $(BUILD_DIR)
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ..
-	@$(MAKE) -C $(BUILD_DIR)
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
+	cmake --build $(BUILD_DIR)
 
 ## install each dependency
-deps/%/build: .git
+deps/%/build deps/%/out: .git
 	git submodule update --init deps/$*
 	@echo "Installing $*..."
 	@$(MAKE) -C deps/ install_$*
+	
+run-tests:
+	$(MAKE) -C test/ simple-tests
 
 # if downloaded as zip, the submodules need to be restored
 .git:
@@ -45,7 +50,7 @@ format:
 clean:
 	@rm -rf build
 	@rm -rf $(DEPS)
-	#rm -rf deps/install
+	rm -rf deps/install
 
 
 .PHONY: all release debug build format clean help
