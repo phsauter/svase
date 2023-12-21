@@ -17,6 +17,7 @@
 #include "svase/preproc.h"
 #include "svase/rewrite.h"
 
+#include "slang/ast/Compilation.h"
 #include "slang/ast/symbols/CompilationUnitSymbols.h"
 #include "slang/driver/Driver.h"
 #include "slang/util/TimeTrace.h"
@@ -112,7 +113,7 @@ int driverMain(int argc, char **argv) {
   auto builtinFlags =
       "--ignore-unknown-modules --allow-use-before-declare --single-unit -Wrange-width-oob -Wrange-oob"sv;
   if (cmdOptsRes.count("fslang"))
-    ok &= slangDriver.processCommandFile(
+    ok &= slangDriver.processCommandFiles(
         cmdOptsRes["slang-argfile"].as<std::string>(), true);
   std::string slangArgs = cmdOptsRes.count("slang-args")
                               ? cmdOptsRes["slang-args"].as<std::string>()
@@ -130,10 +131,9 @@ int driverMain(int argc, char **argv) {
   // Preprocess buffers
   TypedBumpAllocator<std::string> preBuffers;
   try {
-    TimeTraceScope timeScope("preproc"sv, ""sv);
     diag.logStage("PREPROCESS");
-    Preprocessor preproc(slangDriver.buffers, preBuffers, diag);
-    preproc.preprocess();
+    TimeTraceScope timeScope("preproc"sv, ""sv);
+    ok = slangDriver.runPreprocessor(true, false, false); // keep comments
   } catch (const std::exception &e) {
     diag.log(DiagSev::Fatal, e.what());
     ok = false;

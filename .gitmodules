@@ -7,3 +7,6 @@
 [submodule "deps/slang"]
 	path = deps/slang
 	url = https://github.com/MikePopoloski/slang.git
+[submodule "deps/mimalloc"]
+	path = deps/mimalloc
+	url = https://github.com/microsoft/mimalloc.git

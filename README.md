@@ -39,7 +39,7 @@ This project is still considered to be in early development; some parts may not 
 
 * [ ] Use better command line library (`cxxopts` is buggy and lacking)
 * [ ] Revise cloning and usev `std::move` where appropriate
-* [ ] Switch to next available Slang release
+* [X] Switch to next available Slang release
 
 ### Hardening
 

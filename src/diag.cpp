@@ -49,7 +49,7 @@ void Diag::logLocation(DiagSev sev, std::string_view msg, Diagnostic od,
   clear();
   // TODO: throw something more appropriate
   if (sev >= DiagSev::Fatal)
-    ASSUME_UNREACHABLE;
+    SLANG_UNREACHABLE;
 }
 
 void Diag::setVerbosity(DiagSev sev) { verbosity = sev; }
@@ -83,7 +83,7 @@ void Diag::log(DiagSev sev, std::string_view msg, bool keepUnique) {
     OS::printE(fmt::format("{}\n", msg));
   // TODO: throw something more appropriate
   if (sev >= DiagSev::Fatal)
-    ASSUME_UNREACHABLE;
+    SLANG_UNREACHABLE;
 }
 
 void Diag::log(DiagSev sev, std::string_view msg, const SourceLocation &loc,
