@@ -20,6 +20,8 @@ debug: $(DEPS)
 	@$(MAKE) build BUILD_TYPE=Debug
 
 build: $(DEPS)
+	@rm -rf $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
 	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
 	cmake --build $(BUILD_DIR)
 
@@ -33,7 +35,7 @@ deps/%/build deps/%/out: .git
 .git:
 	@if [ ! -d ".git" ]; then \
 		git init; \
-		awk -f scripts/restore_submodules.awk .gitmodules; \
+		.github/restore_submodules.sh; \
 	fi
 
 ## format code to match linter

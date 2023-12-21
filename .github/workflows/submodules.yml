@@ -1,0 +1,41 @@
+# Copyright (c) 2022 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Philippe Sauter <phsauter@ethz.ch>
+
+# This exists to make Githubs zip-download actually somewhat usable
+# The hashes of the used submodule commits are not stored in .gitmodule
+# but rather in the git-tree itself.
+# This appends the commit to each submodule in .gitmodule
+
+name: Save Submodule Commits
+
+on:
+  push:
+
+jobs:
+  save-submodule-hashes:
+    runs-on: ubuntu-latest
+    if: fileExists('.gitmodules')
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Generate File
+      run: |
+        .github/save_submodules.sh
+
+    - name: Check if File Changed
+      run: |
+        git diff --exit-code .github/.submodules_generated
+
+    # bot details: https://github.com/orgs/community/discussions/26560#discussioncomment-3531273
+    - name: Commit and Push Changes
+      if: success()
+      run: |
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
+        git add .github/.submodules_generated
+        git commit -m "ci: update submodule commit hashes"
+        git push

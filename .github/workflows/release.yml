@@ -1,0 +1,87 @@
+# Copyright (c) 2022 ETH Zurich and University of Bologna.
+# Licensed under the Apache License, Version 2.0, see LICENSE for details.
+# SPDX-License-Identifier: Apache-2.0
+
+# Author:  Philippe Sauter <phsauter@ethz.ch>
+
+# based on: https://github.com/saxbophone/CPP20-Cross-Platform-Template/blob/master/.github/workflows/build-release.yml
+
+name: build-release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: ${{matrix.os}}
+    env:
+      BUILD_TYPE: Release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - platform_name: linux
+          os: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Build OS
+      shell: bash
+      run: |
+        docker build .github/docker -t ${{matrix.platform_name}}-builder
+
+    # ToDo: Add deps to cache
+    - name: Build SVase
+      shell: bash
+      run: |
+        docker run \
+          -t --rm \
+          -u `stat -c "%u:%g" ./` \
+          -v "${{github.workspace}}:/svase" \
+          ${{matrix.platform_name}}-builder \
+          sh -c 'make release -j';
+          ls ${{github.workspace}}/build
+
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: svase_${{github.run_number}}_${{matrix.platform_name}}
+        path: ${{github.workspace}}/build/svase
+
+  build-docs:
+    runs-on: ubuntu-latest
+    # don't deploy docs unless release build succeeds
+    needs: build-release
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Format Docs Version Name
+      run: |
+        if [[ $GITHUB_REF == 'refs/tags/'* ]]; then
+          TAG_NAME=${GITHUB_REF#'refs/tags/'}
+          echo "TAG_NAME=${TAG_NAME%.*}" >> $GITHUB_ENV
+        else
+          TAG_NAME=${GITHUB_REF#'refs/heads/'}
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+        fi
+        echo "DOCS_SUBDIR=${TAG_NAME}" >> $GITHUB_ENV
+
+    - name: Build Doxygen Docs
+      uses: mattnotmitt/doxygen-action@v1.9.5
+      with:
+        doxyfile-path: 'docs/Doxyfile'
+
+    - name: Deploy Docs
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{secrets.GITHUB_TOKEN}}
+        user_name: 'github-actions[bot]'
+        user_email: 'github-actions[bot]@users.noreply.github.com'
+        publish_branch: gh-pages
+        publish_dir: ./docs/html
+        destination_dir: ${{env.DOCS_SUBDIR}}
