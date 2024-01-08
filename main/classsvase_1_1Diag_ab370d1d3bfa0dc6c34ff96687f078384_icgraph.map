@@ -1,0 +1,5 @@
+<map id="svase::Diag::timeElapsed" name="svase::Diag::timeElapsed">
+<area shape="rect" id="node1" title=" " alt="" coords="455,5,621,31"/>
+<area shape="rect" id="node2" href="$classsvase_1_1Diag.html#ae2947c14c83df1d92777e3bb3e8de11e" title="Get a string representing the elapsed time." alt="" coords="200,5,407,31"/>
+<area shape="rect" id="node3" href="$classsvase_1_1Diag.html#ad91bd3f521ae49564200a04001ee4f5b" title="Log the start of a new stage in a highlighted fashion." alt="" coords="5,5,152,31"/>
+</map>
