@@ -18,7 +18,10 @@ set(CMAKE_BUILD_TYPE Debug)
 # Dependencies
 find_package(slang REQUIRED)
 find_package(fmt REQUIRED)
-find_package(cxxopts REQUIRED)
+
+set(CLI11_TESTING OFF)
+set(CLI11_PRECOMPILED ON)
+add_subdirectory(deps/CLI11)
 
 
 # Build and link
@@ -28,6 +31,7 @@ add_executable(svase
         src/driver.cpp
         src/diag.cpp)
 target_include_directories(svase PRIVATE include)
+target_link_libraries(svase PRIVATE CLI11::CLI11)
 
 if (CMAKE_BUILD_SHARED_LIBS)
     target_link_libraries(svase PRIVATE svlang fmt pthread)

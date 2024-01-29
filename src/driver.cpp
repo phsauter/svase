@@ -5,12 +5,13 @@
 // Author:  Paul Scheffler <paulsc@iis.ee.ethz.ch>
 // Gist:    Main command line driver for SVase.
 
-#include "cxxopts.hpp"
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+
+#include <CLI/CLI.hpp>
 
 #include "svase/design.h"
 #include "svase/diag.h"
@@ -23,43 +24,6 @@
 #include "slang/util/TimeTrace.h"
 
 namespace svase {
-
-cxxopts::Options genCmdOpts() {
-  cxxopts::Options ret("svase",
-                       "SVase: a source-to-source SystemVerilog elaborator");
-  // TODO: make these mandatory somehow and make sure they show in help
-  // TODO: get a better parser library...
-  ret.parse_positional({"top", "out", "files"});
-  ret.add_options()
-      // Mandatory positionals
-      ("top", "Top module of design to elaborate",
-       cxxopts::value<std::string>())(
-          "out", "The output file (- for stdout) or library",
-          cxxopts::value<std::string>())(
-          "files", "The source files to process",
-          cxxopts::value<std::vector<std::string>>())
-      // Optional arguments
-      ("l,lib", "Output library of individual modules",
-       cxxopts::value<bool>()->implicit_value("false")) // TODO
-      ("split",
-       "write all files in split files", // TODO add option to pass a path
-       cxxopts::value<bool>()->implicit_value("false"))(
-          "z,compress", "Compress output file or library using Gzip",
-          cxxopts::value<bool>()->implicit_value("false")) // TODO
-      ("s,slang-argfile", "Argument file overriding Slang default options",
-       cxxopts::value<std::string>())(
-          "S,slang-args", "Argument string overriding Slang default options",
-          cxxopts::value<std::string>())(
-          "r,timetrace", "Time each stage and write chrome event trace to JSON",
-          cxxopts::value<std::string>()) // TODO
-      ("V,verbosity",
-       "Verbosity of stderr diagnostics: 3(errors), 2(warnings), 1(notes)",
-       cxxopts::value<int>()->default_value("2"))
-      // Informational arguments (cause early exit)
-      ("h,help", "Print usage")("v,version", "Print version information");
-
-  return ret;
-}
 
 template <typename Stream, typename String>
 void writeToFile(Stream &os, std::string_view fileName, String contents) {
@@ -85,44 +49,74 @@ int driverMain(int argc, char **argv) {
   DiagSev verbosity;
   bool ok;
 
-  // Parse and handle global args
-  auto cmdOpts = genCmdOpts();
-  cxxopts::ParseResult cmdOptsRes;
-  try {
-    cmdOptsRes = cmdOpts.parse(argc, argv);
-  } catch (const cxxopts::exceptions::parsing &e) {
-    diag.log(DiagSev::Fatal, e.what());
-    return 1;
-  }
-  if (cmdOptsRes.count("help")) {
-    const auto &helpOptions = cmdOpts.help();
-    fmt::print("{}\n", helpOptions);
-    return 0;
-  }
-  if (cmdOptsRes.count("timetrace"))
+  CLI::App app{"SVase: a source-to-source SystemVerilog elaborator"};
+
+  // required options (positional)
+  std::string top;
+  app.add_option("--top,TOP", top, "Top module of design to elaborate")
+      ->required();
+  std::string outFile;
+  app.add_option("--out,OUTPUT", outFile, "The output file (- for stdout)")
+      ->required();
+  std::vector<std::string> files;
+  app.add_option("--files,FILES", files, "The source files to process")
+      ->required();
+  // Todo: use validators for paths
+  // https://cliutils.github.io/CLI11/book/chapters/validators.html
+
+  // additional options
+  std::string cliArgfile = "";
+  app.add_option("--slang-argfile", cliArgfile,
+                 "Argument file overriding Slang default options");
+  std::string cliSlangArgs = "";
+  app.add_option("--slang-args", cliSlangArgs,
+                 "Argument string overriding Slang default options");
+  bool cliSplit = false;
+  app.add_flag(
+      "--split", cliSplit,
+      "Write modules into separate file, (Output interpreted as directory)");
+  bool cliVersion = false;
+  app.add_flag("--version", cliVersion, "Print version information");
+  int cliVerbosity = 2;
+  app.add_option(
+         "-v, --verbosity", cliVerbosity,
+         "Verbosity of stderr diagnostics: 1(errors), 2(warnings), 3(notes)")
+      ->expected(0, 3);
+  bool cliTimeTrace = false;
+  app.add_flag("--timetrace", cliTimeTrace,
+               "Time each stage and write chrome event trace to JSON");
+
+  CLI11_PARSE(app, argc, argv);
+
+  if (cliTimeTrace)
     TimeTrace::initialize();
-  verbosity = (DiagSev)cmdOptsRes["verbosity"].as<int>();
+  // convert from amount of verbose logging to the level of diagnostics it
+  // should show
+  verbosity = ((DiagSev)(4 - cliVerbosity));
   diag.setVerbosity(verbosity);
 
-  // Parse and handle Slang args using its driver
+  // Using the Slang driver, see:
+  // https://sv-lang.com/classslang_1_1driver_1_1_driver.html
   slang::driver::Driver slangDriver;
+  // configure diagnostics
   slangDriver.diagEngine.setIgnoreAllNotes(verbosity > DiagSev::Note);
   slangDriver.diagEngine.setIgnoreAllWarnings(verbosity > DiagSev::Warning);
-  slangDriver.addStandardArgs();
+
+  // add flags/options to driver
   ok = true;
-  auto builtinFlags =
-      "--ignore-unknown-modules --allow-use-before-declare --single-unit -Wrange-width-oob -Wrange-oob"sv;
-  if (cmdOptsRes.count("fslang"))
-    ok &= slangDriver.processCommandFiles(
-        cmdOptsRes["slang-argfile"].as<std::string>(), true);
-  std::string slangArgs = cmdOptsRes.count("slang-args")
-                              ? cmdOptsRes["slang-args"].as<std::string>()
-                              : "";
-  auto slangCmd = fmt::format(
-      "{} {} {} --top {} {}", argv[0], slangArgs, builtinFlags,
-      cmdOptsRes["top"].as<std::string>(),
-      fmt::join(cmdOptsRes["files"].as<std::vector<std::string>>(), " "));
+  slangDriver.addStandardArgs();
+  std::string builtinFlags =
+      "--ignore-unknown-modules --allow-use-before-declare --single-unit "
+      "-Wrange-width-oob -Wrange-oob";
+
+  if (cliArgfile.length() > 0) {
+    ok &= slangDriver.processCommandFiles(cliArgfile, true);
+  }
+
+  auto slangCmd = fmt::format("{} {} {} --top {} {}", argv[0], cliSlangArgs,
+                              builtinFlags, top, fmt::join(files, " "));
   ok &= slangDriver.parseCommandLine(slangCmd);
+
   ok &= slangDriver.processOptions();
   diag.registerEngine(&slangDriver.sourceManager);
   if (!ok)
@@ -202,8 +196,7 @@ int driverMain(int argc, char **argv) {
   diag.logStage("REWRITE [after recompilation]");
   compilation = std::make_unique<Compilation>(compilation->getOptions());
   std::vector<std::pair<std::string, std::string>> intermediateBuffers;
-  intermediateBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
-                                   synTree->root().toString());
+  intermediateBuffers.emplace_back(top, synTree->root().toString());
   Diag newDiag;
   newDiag.setVerbosity(verbosity);
   SourceManager newSourceManager;
@@ -240,8 +233,7 @@ int driverMain(int argc, char **argv) {
     diag.logStage("POSTPROCESS");
     TimeTraceScope timeScope("postproc"sv, ""sv);
     // TODO: proper lib handling
-    postBuffers.emplace_back(cmdOptsRes["top"].as<std::string>(),
-                             synTree->root().toString());
+    postBuffers.emplace_back(top, synTree->root().toString());
     int moduleAmount = 0, packageAmount = 0, interfaceAmount = 0,
         classAmount = 0, unknownAmount = 0;
     for (size_t i = 0; i < synTree->root().childNode(0)->getChildCount(); i++) {
@@ -281,9 +273,9 @@ int driverMain(int argc, char **argv) {
   TimeTraceScope timeScope("writeout"sv, ""sv);
   // TODO: library handling and such; guard that out exists, is legal
   // beforehand!
-  writeToFile(cmdOptsRes["out"].as<std::string>(), postBuffers.back().second);
+  writeToFile(outFile, postBuffers.back().second);
   std::string defaultPath = "splitted_output";
-  if (cmdOptsRes.count("split")) {
+  if (cliSplit) {
     if (!std::filesystem::is_directory(defaultPath) ||
         !std::filesystem::exists(defaultPath)) {
       std::filesystem::create_directory(defaultPath);

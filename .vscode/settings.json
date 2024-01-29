@@ -1,0 +1,6 @@
+{
+	"files.associations": {
+		"*.l2c_pref": "cpp",
+		"bitset": "cpp"
+	}
+}

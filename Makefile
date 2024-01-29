@@ -6,7 +6,7 @@
 
 BUILD_DIR      ?= build
 BUILD_TYPE     ?= Debug
-DEPS   := deps/fmt/build deps/mimalloc/out deps/slang/build deps/cxxopts/build
+DEPS   := deps/fmt/build deps/mimalloc/out deps/slang/build deps/CLI11/build
 SVASE  := $(BUILD_DIR)/svase
 
 ## build svase in debug mode (default)
@@ -31,7 +31,7 @@ deps/%/build deps/%/out: .git
 	git submodule update --init deps/$*
 	@echo "Installing $*..."
 	@$(MAKE) -C deps/ install_$*
-	
+
 run-tests:
 	$(MAKE) -C test/ simple-tests
 

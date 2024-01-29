@@ -7,7 +7,7 @@
 all: install_fmt
 all: install_mimalloc
 all: install_slang
-all: install_cxxopts
+all: install_CLI11
 
 
 install:
@@ -31,8 +31,5 @@ install_slang: | install
 	cmake --build slang/build -j$(shell nproc)
 	cmake --install slang/build --prefix install
 
-install_cxxopts: | install
-	git submodule update --init --recursive cxxopts
-	cd cxxopts && cmake -B build
-	cmake --build cxxopts/build -j$(shell nproc)
-	cmake --install cxxopts/build --prefix install
+install_CLI11: | install
+	git submodule update --init --recursive CLI11
