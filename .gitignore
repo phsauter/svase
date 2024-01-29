@@ -1,5 +1,7 @@
 **/.idea
-**/*build*
+build/
+deps/**/build
 deps/install
 splitted_output/
 test/debug
+test/test_script.sh

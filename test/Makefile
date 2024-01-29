@@ -19,7 +19,7 @@ simple-tests:
 	@for file in $(SIMPLE_FILES); do \
 		printf "\nRunning svase on $$file...\n"; \
 		base=$$(basename $$file); \
-		$(SVASE) test debug/$${base%.*}_out.sv $$file; \
+		$(SVASE) test debug/$${base%.*}_out.sv $$file || { echo "Error: Test $$base failed"; exit 1; }; \
 	done
 
 pickles: test_deps

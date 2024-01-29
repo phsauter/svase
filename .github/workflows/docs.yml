@@ -6,7 +6,7 @@
 
 # based on: https://github.com/saxbophone/CPP20-Cross-Platform-Template/blob/master/.github/workflows/build-release.yml
 
-name: build-release
+name: Build Release Docs
 
 on:
   release:
@@ -14,49 +14,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-release:
-    runs-on: ${{matrix.os}}
-    env:
-      BUILD_TYPE: Release
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-        - platform_name: linux
-          os: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
-
-    - name: Build OS
-      shell: bash
-      run: |
-        docker build .github/docker -t ${{matrix.platform_name}}-builder
-
-    # ToDo: Add deps to cache
-    - name: Build SVase
-      shell: bash
-      run: |
-        docker run \
-          -t --rm \
-          -u `stat -c "%u:%g" ./` \
-          -v "${{github.workspace}}:/svase" \
-          ${{matrix.platform_name}}-builder \
-          sh -c 'make release -j';
-          ls ${{github.workspace}}/build
-
-    - name: Upload
-      uses: actions/upload-artifact@v3
-      with:
-        name: svase_${{github.run_number}}_${{matrix.platform_name}}
-        path: ${{github.workspace}}/build/svase
-
   build-docs:
     runs-on: ubuntu-latest
     # don't deploy docs unless release build succeeds
-    needs: build-release
+    needs: build
     steps:
     - uses: actions/checkout@v3
 
