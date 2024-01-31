@@ -27,7 +27,8 @@ install_mimalloc: | install
 
 install_slang: | install
 	cd slang && cmake -B build
-	cmake -S slang -B slang/build -DSLANG_USE_MIMALLOC=OFF
+	cmake -S slang -B slang/build -DSLANG_USE_MIMALLOC=OFF \
+	    -DSLANG_INCLUDE_TOOLS=OFF -DSLANG_INCLUDE_TESTS=OFF
 	cmake --build slang/build -j$(shell nproc)
 	cmake --install slang/build --prefix install
 
