@@ -16,8 +16,6 @@ on:
 jobs:
   build-docs:
     runs-on: ubuntu-latest
-    # don't deploy docs unless release build succeeds
-    needs: build
     steps:
     - uses: actions/checkout@v3
 
