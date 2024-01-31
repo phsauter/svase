@@ -80,7 +80,6 @@ jobs:
         export REPO_PATH=${{github.workspace}}/
         export CMAKE_BUILD_PORTABLE=1
         docker-compose -f .github/docker/docker-compose.yml up
-        chmod +x build/svase
 
     - name: Cache dependencies
       uses: actions/cache@v4
@@ -93,7 +92,47 @@ jobs:
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
-        name: svase_${{github.run_number}}
+        name: svase-linux_${{github.run_number}}
+        path: ${{github.workspace}}/build/svase
+
+
+  build-macos:
+    runs-on: macos-latest
+    needs: save-submodule-hashes
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Restore dependencies from cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+        key: |
+          ${{runner.os}}-deps-all-${{ hashFiles('.github/.submodules_generated') }}
+        restore-keys: |
+          ${{runner.os}}-deps-all-
+
+    - name: Build SVase
+      shell: bash
+      run: |
+        make release -j
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          deps
+        key: |
+          ${{runner.os}}-deps-all-${{ hashFiles('.github/.submodules_generated') }}
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: svase-macos_${{github.run_number}}
         path: ${{github.workspace}}/build/svase
 
 
@@ -117,7 +156,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
-        name: svase_${{github.run_number}}
+        name: svase-linux_${{github.run_number}}
         path: build
 
     - name: Generate test script
@@ -129,6 +168,25 @@ jobs:
 
     - name: Build and run tests
       run: |
-        docker run --rm -v $(pwd):/svase ${{matrix.os}} sh -c 'cd /svase/test && ./test_script.sh'
+        docker run --rm -v $(pwd):/svase ${{matrix.os}} sh -c 'chmod+x build/svase && cd /svase/test && ./test_script.sh'
 
+
+  tests-macos:
+    runs-on: macos-latest
+    needs: build-macos
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: svase-macos_${{github.run_number}}
+        path: build
+
+    - name: Run tests
+      run: |
+        cd test
+        make simple-tests
 
