@@ -119,6 +119,7 @@ jobs:
     - name: Build SVase
       shell: bash
       run: |
+        export CXX=gcc-13
         make release -j
 
     - name: Cache dependencies
