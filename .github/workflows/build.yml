@@ -61,11 +61,11 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          deps/install
+          deps
         key: |
-          ${{matrix.os}}-deps-${{ hashFiles('.github/.submodules_generated') }}
+          ${{matrix.os}}-deps-all-${{ hashFiles('.github/.submodules_generated') }}
         restore-keys: |
-          ${{matrix.os}}-deps-
+          ${{matrix.os}}-deps-all-
 
     - name: Build OS
       shell: bash
@@ -86,9 +86,9 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          deps/install
+          deps
         key: |
-          ${{matrix.os}}-deps-${{ hashFiles('.github/.submodules_generated') }}
+          ${{matrix.os}}-deps-all-${{ hashFiles('.github/.submodules_generated') }}
 
     - name: Upload
       uses: actions/upload-artifact@v4
