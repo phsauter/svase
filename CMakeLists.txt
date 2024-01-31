@@ -4,6 +4,8 @@ project(svase)
 set(CMAKE_CXX_STANDARD 20)
 
 option(CMAKE_BUILD_SHARED_LIBS "Build shared libraries" OFF)
+option(CMAKE_BUILD_PORTABLE "Build fully portable (no shared libc), not recommended with glibc" OFF)
+# used on alpine builder, see: https://build-your-own.org/blog/20221229_alpine/
 
 # Handle local prefix (TODO: parameterize)
 set(DEP_INSTALL_DIR deps/install)
@@ -36,6 +38,11 @@ target_link_libraries(svase PRIVATE CLI11::CLI11)
 if (CMAKE_BUILD_SHARED_LIBS)
     target_link_libraries(svase PRIVATE svlang fmt pthread)
 else()
-    target_link_libraries(svase PRIVATE svlang fmt pthread -static)
+    if (CMAKE_BUILD_PORTABLE)
+        target_link_libraries(svase PRIVATE svlang fmt pthread -static)
+    else()
+        target_link_libraries(svase PRIVATE svlang fmt pthread -static-libgcc -static-libstdc++)
+    endif()
 endif()
+
 

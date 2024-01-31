@@ -6,7 +6,8 @@
 # - Philippe Sauter <phsauter@ethz.ch>
 #
 # syntax=docker/dockerfile:1
-# slang requires very recent libboost and clang versions so doing it on alpine is faster
+# slang requires very recent libboost and clang versions so doing it on alpine is fast
+# also we want to link against musl, see https://build-your-own.org/blog/20221229_alpine/
 ARG BASE_IMG=alpine:3.19
 
 FROM ${BASE_IMG} AS builder
