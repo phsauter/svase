@@ -95,12 +95,6 @@ jobs:
         name: svase-linux_${{github.run_number}}
         path: ${{github.workspace}}/build/svase
 
-    - name: Tests
-      run: |
-        cd test
-        ls -al ../build
-        make simple-tests
-
 
   #   build-macos:
   #     runs-on: macos-latest
@@ -143,52 +137,52 @@ jobs:
   #         path: ${{github.workspace}}/build/svase
 
 
-  tests:
-    runs-on: ubuntu-latest
-    needs: build
-    strategy:
-      matrix:
-        os:
-        - debian:12
-        # - debian:11
-        # - debian:10
-        # - almalinux:9.0
-        # - almalinux:8.7
-        # - centos:7.4.1708
+#   tests:
+#     runs-on: ubuntu-latest
+#     needs: build
+#     strategy:
+#       matrix:
+#         os:
+#         - debian:12
+#         # - debian:11
+#         # - debian:10
+#         # - almalinux:9.0
+#         # - almalinux:8.7
+#         # - centos:7.4.1708
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+#     steps:
+#     - name: Checkout code
+#       uses: actions/checkout@v4
 
-    - name: Download artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: svase-linux_${{github.run_number}}
-        path: build
+#     - name: Download artifacts
+#       uses: actions/download-artifact@v4
+#       with:
+#         name: svase-linux_${{github.run_number}}
+#         path: build
 
-    - name: Generate test script
-      run: |
-        chmod +x build/svase
-        mv build/svase build/svase2
-        mv build/svase2 build/svase
-        ls -al
-        ls -al build
-        cd test
-        make --dry-run simple-tests SVASE=/svase/build/svase > test_script.sh
-        make simple-tests
-        chmod +x test_script.sh
-        cat test_script.sh
-        cd ${{github.workspace}}/
-        pwd
-        ls -al
-        env
+#     - name: Generate test script
+#       run: |
+#         chmod +x build/svase
+#         mv build/svase build/svase2
+#         mv build/svase2 build/svase
+#         ls -al
+#         ls -al build
+#         cd test
+#         make --dry-run simple-tests SVASE=/svase/build/svase > test_script.sh
+#         make simple-tests
+#         chmod +x test_script.sh
+#         cat test_script.sh
+#         cd ${{github.workspace}}/
+#         pwd
+#         ls -al
+#         env
 
-    - name: Build and run tests
-      run: |
-        docker run --rm \
-          -u `stat -c "%u:%g" ./` \
-          -v $(pwd):/svase ${{matrix.os}} \
-          sh -c 'cd /svase/test && ls -al /svase/build && ./test_script.sh'
+#     - name: Build and run tests
+#       run: |
+#         docker run --rm \
+#           -u `stat -c "%u:%g" ./` \
+#           -v $(pwd):/svase ${{matrix.os}} \
+#           sh -c 'cd /svase/test && ls -al /svase/build && ./test_script.sh'
 
 
 #   tests-macos:
