@@ -43,13 +43,13 @@ jobs:
         fi
 
   build:
-    runs-on: ${{matrix.os}}
+    runs-on: ubuntu-latest
     env:
       BUILD_TYPE: Release
     needs: save-submodule-hashes
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: ['alpine:3.19']
 
     steps:
     - name: Checkout code
@@ -70,18 +70,15 @@ jobs:
     - name: Build OS
       shell: bash
       run: |
-        docker build .github/docker -t ${{matrix.os}}-builder
+        export BASE_IMG=${{matrix.os}}
+        docker build .github/docker -t svase-builder
 
     - name: Build SVase
       shell: bash
       run: |
-        docker run \
-          -t --rm \
-          -u `stat -c "%u:%g" ./` \
-          -v "${{github.workspace}}:/svase" \
-          ${{matrix.os}}-builder \
-          sh -c 'make release -j';
-          ls ${{github.workspace}}/build
+        export GID=$(id -g)
+        export REPO_PATH=${{github.workspace}}/
+        docker-compose -f .github/docker/docker-compose.yml up
 
     - name: Cache dependencies
       uses: actions/cache@v4
@@ -104,11 +101,12 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu:20.04
-        - ubuntu:22.04
-        - debian:11
         - debian:12
+        - debian:11
+        - debian:10
         - almalinux:9.0
+        - almalinux:8.7
+        - centos:7.4.1708
 
     steps:
     - name: Checkout code
@@ -122,8 +120,10 @@ jobs:
 
     - name: Generate test script
       run: |
-        cd test && make --dry-run simple-tests >> test_script.sh
-        chmod +x test/test_script.sh
+        cd test
+        make --dry-run simple-tests > test_script.sh
+        chmod +x test_script.sh
+        cd ..
 
     - name: Build and run tests
       run: |

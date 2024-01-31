@@ -36,6 +36,6 @@ target_link_libraries(svase PRIVATE CLI11::CLI11)
 if (CMAKE_BUILD_SHARED_LIBS)
     target_link_libraries(svase PRIVATE svlang fmt pthread)
 else()
-    target_link_libraries(svase PRIVATE svlang fmt pthread -static-libgcc -static-libstdc++)
+    target_link_libraries(svase PRIVATE svlang fmt pthread -static)
 endif()
 
