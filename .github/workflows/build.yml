@@ -169,7 +169,7 @@ jobs:
 
     - name: Build and run tests
       run: |
-        docker run --rm -v $(pwd):/svase ${{matrix.os}} sh -c 'chmod+x build/svase && cd /svase/test && ./test_script.sh'
+        docker run --rm -v $(pwd):/svase ${{matrix.os}} sh -c 'chmod +x build/svase && cd /svase/test && ./test_script.sh'
 
 
   tests-macos:
