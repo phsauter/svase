@@ -166,10 +166,13 @@ jobs:
         make --dry-run simple-tests > test_script.sh
         chmod +x test_script.sh
         cd ..
+        ls ./
+        ls build/
+        mv build/svase-linux_${{github.run_number}} build/svase
 
     - name: Build and run tests
       run: |
-        docker run --rm -v $(pwd):/svase ${{matrix.os}} sh -c 'chmod +x build/svase && cd /svase/test && ./test_script.sh'
+        docker run --rm -v $(pwd):/svase ${{matrix.os}} sh -c 'cd /svase/test && ./test_script.sh'
 
 
   tests-macos:
