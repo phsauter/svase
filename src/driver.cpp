@@ -123,19 +123,18 @@ int driverMain(int argc, char **argv) {
     return 2;
 
   // Preprocess buffers
-  /*TypedBumpAllocator<std::string> preBuffers;
+  TypedBumpAllocator<std::string> preBuffers;
   try {
-    diag.logStage("PREPROCESS");
     TimeTraceScope timeScope("preproc"sv, ""sv);
-     this prints the preprocessed to stdout, not what we want
-    I think this never worked, it used to call a test function...
-    ok = slangDriver.runPreprocessor(true, false, false);
+    diag.logStage("PREPROCESS");
+    Preprocessor preproc(slangDriver.buffers, preBuffers, diag);
+    preproc.preprocess();
   } catch (const std::exception &e) {
     diag.log(DiagSev::Fatal, e.what());
     ok = false;
   }
   if (!ok)
-    return 3;*/
+    return 3;
 
   // Parse using Slang
   try {
